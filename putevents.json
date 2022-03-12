@@ -1,0 +1,8 @@
+[
+	{
+		"Source": "order.service",
+		"Detail": "{ \"key1\": \"value1\", \"key2\": \"value2\" }",
+		"DetailType": "Order.Created",
+		"EventBusName": "global-bus"
+  }
+]

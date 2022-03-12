@@ -1,0 +1,10 @@
+**/node_modules/
+**/dist/
+**/.nyc_output
+**/coverage
+**/.serverless
+**/.webpack
+**/*.json
+stacks/**/*.js
+bin/**/*.js
+cdk.out/**
