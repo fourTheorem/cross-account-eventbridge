@@ -13,8 +13,10 @@
     "cdk": "cdk"
   },
   "devDependencies": {
+    "@types/aws-lambda": "^8.10.93",
     "@types/jest": "^26.0.10",
     "@types/node": "10.17.27",
+    "@types/uuid": "^8.3.4",
     "aws-cdk": "2.15.0",
     "eslint": "^8.10.0",
     "eslint-config-standard": "^16.0.3",
@@ -28,6 +30,7 @@
     "typescript": "~3.9.7"
   },
   "dependencies": {
+    "@aws-lambda-powertools/tracer": "^0.7.0",
     "@aws-sdk/client-eventbridge": "^3.54.0",
     "@aws-sdk/client-ssm": "^3.54.0",
     "aws-cdk-lib": "2.15.0",

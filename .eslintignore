@@ -5,6 +5,5 @@
 **/.serverless
 **/.webpack
 **/*.json
-stacks/**/*.js
-bin/**/*.js
+**/*.js
 cdk.out/**

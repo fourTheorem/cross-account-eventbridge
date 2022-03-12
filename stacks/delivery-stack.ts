@@ -1,8 +1,8 @@
 import { Construct } from 'constructs';
 import * as events from 'aws-cdk-lib/aws-events'
 import { LambdaFunction as LambdaFunctionTarget } from 'aws-cdk-lib/aws-events-targets'
-import * as iam from 'aws-cdk-lib/aws-iam'
-import * as lambda from 'aws-cdk-lib/aws-lambda-nodejs'
+import * as nodeLambda from 'aws-cdk-lib/aws-lambda-nodejs'
+import * as lambda from 'aws-cdk-lib/aws-lambda'
 import { BaseStack, BaseStackProps } from './base-stack'
 import { Duration } from 'aws-cdk-lib';
 import { RetentionDays } from 'aws-cdk-lib/aws-logs';
@@ -23,14 +23,15 @@ export class DeliveryServiceStack extends BaseStack {
   }
 
   createOrderDeliveryFunction() {
-    const orderDeliveryFunction = new lambda.NodejsFunction(this, 'OrderDeliveryFunction', {
-      entry: './src/delivery-handler.js',
+    const orderDeliveryFunction = new nodeLambda.NodejsFunction(this, 'OrderDeliveryFunction', {
+      entry: './src/delivery-handler.ts',
       handler: 'handleOrderCreated',
       environment: {
         BUS_ARN: this.globalBus.eventBusArn,
       },
       timeout: Duration.seconds(10),
       logRetention: RetentionDays.ONE_WEEK,
+      tracing: lambda.Tracing.ACTIVE,
     })
     orderDeliveryFunction.addToRolePolicy(this.globalBusPutEventsStatement)
 

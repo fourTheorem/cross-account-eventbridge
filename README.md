@@ -32,8 +32,8 @@ The code is commented to help explain the resources used and flow of events.
 | CDK Stack | Lambda functions |
 |----------|----------------|
 | [bus-stack.ts](./stacks/bus-stack.ts) | _N/A_ |
-| [order-stack.ts](./stacks/order-stack.ts) | [order-handler.js](./src/order-handler.js) |
-| [delivery-stack.ts](./stacks/delivery-stack.ts) | [delivery-handler.js](./src/delivery-handler.js) |
+| [order-stack.ts](./stacks/order-stack.ts) | [order-handler.ts](./src/order-handler.ts) |
+| [delivery-stack.ts](./stacks/delivery-stack.ts) | [delivery-handler.ts](./src/delivery-handler.ts) |
 
 ## Setup
 1. Install the CDK and application modules:

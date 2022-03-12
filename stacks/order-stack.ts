@@ -1,9 +1,8 @@
-import { StackProps, Stack } from 'aws-cdk-lib';
 import { Construct } from 'constructs';
 import * as events from 'aws-cdk-lib/aws-events'
 import { LambdaFunction as LambdaFunctionTarget } from 'aws-cdk-lib/aws-events-targets'
-import * as iam from 'aws-cdk-lib/aws-iam'
 import * as nodeLambda from 'aws-cdk-lib/aws-lambda-nodejs'
+import * as lambda from 'aws-cdk-lib/aws-lambda'
 import * as apigw from 'aws-cdk-lib/aws-apigateway'
 import { BaseStack, BaseStackProps } from './base-stack';
 import { RetentionDays } from 'aws-cdk-lib/aws-logs';
@@ -27,12 +26,13 @@ export class OrderServiceStack extends BaseStack {
 
   createOrderCreateFunction() {
     const createOrderFunction = new nodeLambda.NodejsFunction(this, 'CreateOrderFunction', {
-      entry: './src/order-handler.js',
+      entry: './src/order-handler.ts',
       handler: 'handleOrderCreate',
       environment: {
         BUS_ARN: this.globalBus.eventBusArn
       },
       logRetention: RetentionDays.ONE_WEEK,
+      tracing: lambda.Tracing.ACTIVE,
     })
     createOrderFunction.addToRolePolicy(this.globalBusPutEventsStatement)
     const api = new apigw.RestApi(this, 'OrderApi', { restApiName: 'order' })
@@ -41,12 +41,13 @@ export class OrderServiceStack extends BaseStack {
 
   createDeliveryUpdateFunction() {
     const deliveryUpdateFunction = new nodeLambda.NodejsFunction(this, 'DeliveryUpdateFunction', {
-      entry: './src/order-handler.js',
+      entry: './src/order-handler.ts',
       handler: 'handleDeliveryUpdate',
       environment: {
         BUS_ARN: this.globalBus.eventBusArn
       },
       logRetention: RetentionDays.ONE_WEEK,
+      tracing: lambda.Tracing.ACTIVE,
     })
     deliveryUpdateFunction.addToRolePolicy(this.globalBusPutEventsStatement)
 
