@@ -13,6 +13,7 @@
     "cdk": "cdk"
   },
   "devDependencies": {
+    "@middy/core": "^2.5.7",
     "@types/aws-lambda": "^8.10.93",
     "@types/jest": "^26.0.10",
     "@types/node": "10.17.27",
