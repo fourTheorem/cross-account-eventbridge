@@ -3,6 +3,7 @@ import { Construct } from "constructs";
 import { ApplicationStage } from "./application-stage";
 
 interface PipelineStackProps extends StackProps {
+  applicationStage: ApplicationStage
 }
 
 export class PipelineStack extends Stack {
@@ -28,6 +29,6 @@ export class PipelineStack extends Stack {
         ],
       }),
     });
-    pipeline.addStage(new ApplicationStage(this, 'ApplicationStage', {}))
+    pipeline.addStage(props.applicationStage)
   }
 }
