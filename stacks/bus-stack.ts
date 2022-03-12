@@ -58,7 +58,7 @@ export class BusStack extends Stack {
    * @param id 
    * @param localBus 
    */
-  addLocalBusTarget(id: string, localBus: events.EventBus) {
+  addLocalBusTarget(id: string, localBus: events.IEventBus) {
     this.localBusAccounts.push(localBus.env.account)
     const rule = new events.Rule(this, id, {
       eventBus: this.bus,
