@@ -22,12 +22,12 @@ export class PipelineStack extends Stack {
       synth: new pipelines.ShellStep('Synth', {
         input: pipelines.CodePipelineSource.connection('fourTheorem/cross-account-eventbridge', 'pipeline', {
           connectionArn: codeStarConnection.ref,
-          triggerOnPush: true,
+          triggerOnPush: false, // TODO - set to true when working
         }),
         commands: [
           'npm ci',
           'npm run build',
-          `npx cdk synth -- ${cdkContextArgs}`,
+          `npx cdk ${cdkContextArgs} synth`,
         ],
       }),
     })
