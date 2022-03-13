@@ -14,6 +14,10 @@ const orderAccount = app.node.tryGetContext('order-service-account')
 const deliveryAccount = app.node.tryGetContext('delivery-service-account')
 
 const busStage = new BusStage(app, 'BusStage', {
+  env: {
+    account: busAccount,
+    region: app.region
+  },
   applicationAccounts: [orderAccount, deliveryAccount]
 })
 
