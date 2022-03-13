@@ -4,7 +4,7 @@ import { Construct } from 'constructs'
 import { BaseStack } from './base-stack'
 
 export interface BaseStageProps extends StageProps {
-  globalBus: IEventBus
+  busAccount: string
 }
 
 export abstract class BaseStage extends Stage {

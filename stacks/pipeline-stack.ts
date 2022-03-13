@@ -1,9 +1,9 @@
 import { aws_codestarconnections as codeStartConnections, pipelines, Stack, StackProps, Stage } from "aws-cdk-lib"
-import { Construct } from "constructs";
-import { ApplicationStage } from "./application-stage";
+import { Construct } from "constructs"
 
 interface PipelineStackProps extends StackProps {
-  applicationStage: ApplicationStage
+  stages: Stage[],
+  accounts: Record<string, string>,
 }
 
 export class PipelineStack extends Stack {
@@ -15,6 +15,8 @@ export class PipelineStack extends Stack {
       providerType: 'GitHub'
     })
 
+    const cdkContextArgs = Object.entries(props.accounts).map(([key, value]) => `-c ${key}=${value}`).join(' ')
+
     const pipeline = new pipelines.CodePipeline(this, 'Pipeline', {
       crossAccountKeys: true,
       synth: new pipelines.ShellStep('Synth', {
@@ -25,10 +27,12 @@ export class PipelineStack extends Stack {
         commands: [
           'npm ci',
           'npm run build',
-          'npx cdk synth',
+          `npx cdk synth -- ${cdkContextArgs}`,
         ],
       }),
-    });
-    pipeline.addStage(props.applicationStage)
+    })
+    for (const stage of props.stages) {
+      pipeline.addStage(stage)
+    }
   }
 }
