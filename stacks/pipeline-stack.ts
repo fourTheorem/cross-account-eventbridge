@@ -31,8 +31,9 @@ export class PipelineStack extends Stack {
         ],
       }),
     })
+    const wave = pipeline.addWave('ApplicationWave')
     for (const stage of props.stages) {
-      pipeline.addStage(stage)
+      wave.addStage(stage)
     }
   }
 }
