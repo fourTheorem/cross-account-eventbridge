@@ -4,7 +4,7 @@ This is a demonstration of using EventBridge across accounts to publish cross-do
 * A customer creates an order which is handled by an order service in its own account.
 * Delivery of orders is handled by a separate service in a different account. 
 
-This example uses AWS CDK to create all resources.
+This example uses AWS CDK to create all resources and [CDK Pipelines](https://docs.aws.amazon.com/cdk/v2/guide/cdk_pipeline.html) to deploy everything.
 
 To use this example, three accounts are required:
 

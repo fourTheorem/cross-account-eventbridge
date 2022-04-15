@@ -6,6 +6,11 @@ import {
    EventBus as EventBusTarget,
    CloudWatchLogGroup as LogGroupTarget
 } from 'aws-cdk-lib/aws-events-targets'
+import { EventBus } from 'aws-cdk-lib/aws-events';
+
+interface BusStackProps extends StackProps {
+  applicationAccounts: string[]
+}
 
 /**
  * Stack to create a global EventBus. All applications post cross-domain events to this bus.
@@ -17,9 +22,8 @@ export class BusStack extends Stack {
   /**
    * List of local bus accounts to which global events should be forwarded.
    */
-  localBusAccounts: string[] = []
 
-  constructor(scope: Construct, id: string, props?: StackProps) {
+  constructor(scope: Construct, id: string, props: BusStackProps) {
     super(scope, id, props);
 
     const busLogGroup = new logs.LogGroup(this, 'GlobalBusLogs', {
@@ -34,7 +38,7 @@ export class BusStack extends Stack {
       eventBusName: bus.eventBusName,
       statementId: 'global-bus-policy-stmt',
       statement: {
-        Principal: { AWS: this.localBusAccounts },
+        Principal: { AWS: props?.applicationAccounts },
         Action: 'events:PutEvents',
         Resource: bus.eventBusArn,
         Effect: 'Allow'
@@ -48,25 +52,20 @@ export class BusStack extends Stack {
       },
       targets: [new LogGroupTarget(busLogGroup)]
     })
+    
+    // Create forwarding rules to forward events to a local bus in a different account
+    // and ensure the global bus has permissions to receive events from such accounts.
+    for (const applicationAccount of props.applicationAccounts) {
+      const localBusArn = `arn:aws:events:${this.region}:${applicationAccount}:event-bus/local-bus`
+      const rule = new events.Rule(this, `globalTo${applicationAccount}`, {
+        eventBus: this.bus,
+        ruleName: `globalTo${applicationAccount}`,
+        eventPattern: {
+          account: [{ 'anything-but': applicationAccount }] as any[]
+        }
+      })
+      rule.addTarget(new EventBusTarget(EventBus.fromEventBusArn(this, `localBus${applicationAccount}`, localBusArn)))
+    }
     this.bus = bus
-  }
-
-  /**
-   * Create a forwarding rule to forward events to a local bus in a different account
-   * and ensure the global bus has permissions to receive events from such accounts.
-   * 
-   * @param id 
-   * @param localBus 
-   */
-  addLocalBusTarget(id: string, localBus: events.EventBus) {
-    this.localBusAccounts.push(localBus.env.account)
-    const rule = new events.Rule(this, id, {
-      eventBus: this.bus,
-      ruleName: id,
-      eventPattern: {
-        account: [{ 'anything-but': localBus.env.account }] as any[]
-      }
-    })
-    rule.addTarget(new EventBusTarget(localBus))
   }
 }

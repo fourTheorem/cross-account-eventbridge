@@ -1,34 +1,56 @@
 #!/usr/bin/env node
-import 'source-map-support/register';
-import * as cdk from 'aws-cdk-lib';
-import { BusStack } from '../stacks/bus-stack';
-import { OrderServiceStack } from '../stacks/order-stack';
-import { DeliveryServiceStack } from '../stacks/delivery-stack';
+import 'source-map-support/register'
+import * as cdk from 'aws-cdk-lib'
+import { PipelineStack } from '../stacks/pipeline-stack'
+import { BusStage } from '../stacks/bus-stage'
+import { OrderStage } from '../stacks/order-stage'
+import { DeliveryStage } from '../stacks/delivery-stage'
 
-const app = new cdk.App();
-const busStack = new BusStack(app, `BusStack`, {
+const app = new cdk.App()
+
+const cicdAccount = app.node.tryGetContext('cicd-account')
+const busAccount = app.node.tryGetContext('bus-account')
+const orderAccount = app.node.tryGetContext('order-service-account')
+const deliveryAccount = app.node.tryGetContext('delivery-service-account')
+
+const busStage = new BusStage(app, 'BusStage', {
   env: {
-    account: app.node.tryGetContext(`bus-account`),
+    account: busAccount,
     region: app.region
   },
+  applicationAccounts: [orderAccount, deliveryAccount]
 })
-const globalBus = busStack.bus
 
-const orderServiceStack = new OrderServiceStack(app, 'OrderServiceStack', {
+const orderStage = new OrderStage(app, 'OrderStage', {
   env: {
-    account: app.node.tryGetContext(`order-service-account`),
+    account: orderAccount,
     region: app.region
   },
-  globalBus
+  busAccount,
 })
 
-const deliveryServiceStack = new DeliveryServiceStack(app, 'DeliveryServiceStack', {
+const deliveryStage = new DeliveryStage(app, 'DeliveryStage', {
   env: {
-    account: app.node.tryGetContext(`delivery-service-account`),
+    account: deliveryAccount,
     region: app.region
   },
-  globalBus
+  busAccount,
 })
 
-busStack.addLocalBusTarget('OrderServiceBusTarget', orderServiceStack.localBus)
-busStack.addLocalBusTarget('DeliveryServiceBusTarget', deliveryServiceStack.localBus)
+const pipelineStack = new PipelineStack(app, 'PipelineStack', {
+  env: {
+    account: app.node.tryGetContext(`cicd-account`),
+    region: app.region
+  },
+  stages: [
+    busStage,
+    orderStage,
+    deliveryStage,
+  ],
+  accounts: {
+    'cicd-account': cicdAccount,
+    'bus-account': busAccount,
+    'order-service-account': orderAccount,
+    'delivery-service-account': deliveryAccount,
+  }
+})

@@ -1,5 +1,5 @@
 import { Stack, StackProps } from 'aws-cdk-lib';
-import { IEventBus } from 'aws-cdk-lib/aws-events';
+import { EventBus, IEventBus } from 'aws-cdk-lib/aws-events';
 import * as iam from 'aws-cdk-lib/aws-iam'
 import * as logs from 'aws-cdk-lib/aws-logs'
 import * as events from 'aws-cdk-lib/aws-events'
@@ -7,7 +7,7 @@ import { CloudWatchLogGroup as LogGroupTarget } from 'aws-cdk-lib/aws-events-tar
 import { Construct } from 'constructs';
 
 export interface BaseStackProps extends StackProps {
-  globalBus: IEventBus
+  busAccount: string
 }
 
 /**
@@ -22,10 +22,11 @@ export abstract class BaseStack extends Stack {
   constructor(scope: Construct, id: string, props: BaseStackProps) {
     super(scope, id, props)
 
-    this.globalBus = props.globalBus
+    const globalBusArn = `arn:aws:events:${this.region}:${props.busAccount}:event-bus/global-bus`
+    this.globalBus = EventBus.fromEventBusArn(this, 'GlobalBus', globalBusArn)
     this.globalBusPutEventsStatement = new iam.PolicyStatement({
       actions: ['events:PutEvents'],
-      resources: [this.globalBus.eventBusArn],
+      resources: [globalBusArn],
     })
 
     const busLogGroup = new logs.LogGroup(this, 'LocalBusLogs', {
@@ -37,7 +38,7 @@ export abstract class BaseStack extends Stack {
       eventBusName: localBus.eventBusName,
       statementId: 'local-bus-policy-stmt',
       statement: {
-        Principal: { AWS: props.globalBus.env.account },
+        Principal: { AWS: this.globalBus.env.account },
         Action: 'events:PutEvents',
         Resource: localBus.eventBusArn,
         Effect: 'Allow'
