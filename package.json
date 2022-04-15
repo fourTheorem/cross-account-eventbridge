@@ -1,0 +1,41 @@
+{
+  "name": "cross-account-eventbridge",
+  "version": "0.1.0",
+  "bin": {
+    "event-bridge-org": "bin/event-bridge-org.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "watch": "tsc -w",
+    "test": "npm run test:lint",
+    "format": "eslint --cache --fix .",
+    "test:lint": "eslint .",
+    "cdk": "cdk"
+  },
+  "devDependencies": {
+    "@types/aws-lambda": "^8.10.93",
+    "@types/jest": "^26.0.10",
+    "@types/node": "10.17.27",
+    "@types/uuid": "^8.3.4",
+    "aws-cdk": "2.15.0",
+    "eslint": "^8.10.0",
+    "eslint-config-standard": "^16.0.3",
+    "eslint-plugin-import": "^2.25.4",
+    "eslint-plugin-node": "^11.1.0",
+    "eslint-plugin-promise": "^6.0.0",
+    "eslint-plugin-standard": "^5.0.0",
+    "jest": "^26.4.2",
+    "ts-jest": "^26.2.0",
+    "ts-node": "^9.0.0",
+    "typescript": "~3.9.7"
+  },
+  "dependencies": {
+    "@aws-lambda-powertools/tracer": "^0.7.0",
+    "@aws-sdk/client-eventbridge": "^3.54.0",
+    "@aws-sdk/client-ssm": "^3.54.0",
+    "aws-cdk-lib": "2.15.0",
+    "constructs": "^10.0.0",
+    "pino": "^7.8.1",
+    "source-map-support": "^0.5.16"
+  }
+}
