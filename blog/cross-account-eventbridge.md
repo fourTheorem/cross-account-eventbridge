@@ -1,10 +1,14 @@
+# EventBridge as a Cross-Account Event Backbone
+<!--
 ---
+// Front matter for dev.to
 title: EventBridge as a Cross-Account Event Backbone
 published: false
 description: Achieving event driven architecture across applications, services and accounts in AWS
 tags: aws, eventbridge, crossaccount, kafka
 //cover_image: https://direct_url_to_image.jpg
 ---
+-->
 
 Two of the emerging best practices in modern AWS applications are:
 1. Use a separate AWS account per application
