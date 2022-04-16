@@ -42,7 +42,9 @@ We have covered the reasons for these two underlying best practices. Let's now d
 
 ## What is an Event Backbone?
 
-An Event Backbone is simply an event communication mechanism that serves multiple applications. The term is [commonly used](https://kgb1001001.github.io/cloudadoptionpatterns/Event-Based-Architecture/Event-Backbone/) for such systems based on Apache Kafka, since Kafka was one of the first technologies that enabled event backbones with massive scale and performance. Since Kafka was first released over a decade ago, cloud managed services have evolved to the degree where you don't need to Kafka to have a scalable, reliable event backbone. Amazon EventBridge is the most obvious example, since it has managed to pull off the amazing feat of having a large feature set and massive scalability while remaining one of the simplest cloud services there is.
+An Event Backbone is simply an event communication mechanism that serves multiple applications. The concept evolved from the idea of an Enterprise Service Bus (ESB) in the time of service-oriented architecture (SOA). ESBs have a broader set of capabilities however, including more complex routing, extensive transformation capabilities and even business rule execution. An event backbone is fundamentally simpler, focusing on scalable, reliable event transport and ensuring that business logic belongs to the services and not the bus.
+
+The term is [commonly used](https://kgb1001001.github.io/cloudadoptionpatterns/Event-Based-Architecture/Event-Backbone/) for such systems based on Apache Kafka, since Kafka was one of the first technologies that enabled event backbones for microservice communication with massive scale and performance. Since Kafka was first released over a decade ago, cloud managed services have evolved to the degree where you don't need to Kafka to have a scalable, reliable event backbone. Amazon EventBridge is the most obvious example, since it has managed to pull off the amazing feat of having a large feature set and massive scalability while remaining one of the simplest cloud services there is.
 
 If you are a Kafka fan, there is effort being put in by AWS in reducing the complexity with the managed MSK service and a generally available 'serverless' version in the works too. I would compare MSK to EventBridge in the same way I would compare EKS to Fargate or Lambda. You get a lot more control and configurability but even with the AWS managed service, you still have plenty of complexity.
 
@@ -56,15 +58,17 @@ We already mentioned that EventBridge has good support for cross-account scenari
 
 For this to work, the target bus must have a policy that allows the source account to send events to it.
 
-Now, let's imagine this idea at a larger scale, where we have multiple accounts, each with their own applications or services. Where does each application need to send events? There are a few options here but this post focuses on my personally preferred one. If you want to know all the options, take a look at [this great talk from re:Invent 2020 on Building event-driven architectures](https://youtu.be/Wk0FoXTUEjo).
-
-The preferred approach here is what that talk refers to as the "single-bus*, multi account-pattern". There are are in fact multiple buses, but a central bus in a dedicated account is used to route messages to multiple accounts, each with their own local bus.
+Now, let's imagine this idea at a larger scale, where we have multiple accounts, each with their own applications or services. Where does each application need to send events? There are a few options here. If you want to explore all the options, take a look at [this great talk from re:Invent 2020 on Building event-driven architectures](https://youtu.be/Wk0FoXTUEjo).  In this article, I'll focus on my preferred option, referred to in that video as the "single-bus*, multi account-pattern". There are are in fact multiple buses, but a central bus in a dedicated account is used to route messages to multiple accounts, each with their own local bus.
 
 - Every service send events to a global bus, a dedicated bus in a separate account
 - Every service receives events from a local bus in its own account
 - The global bus has rules to route all events to every local bus except the local bus of the event sender
 
-You might ask why services can't send events to their local bus instead of the global bus. Apart from adding an additional layer, it's simply not possible with EventBridge.  You cannot have events transitively routed to a third bus (`local -> global -> local`). Only one cross-account target is allowed in the chain (`global -> local`)
+> **Why do we need a global bus _and_ local buses?**
+>
+> You might ask why services can't send events to their local bus instead of the global bus. Since each service receives events from their local bus, should it not publish there too? Apart from adding an additional layer, it's simply not possible with EventBridge.  You cannot have events transitively routed to a third bus (`local -> global -> local`). Only one cross-account target is allowed in the chain (`global -> local`)
+>
+> You might also wonder why we can't get rid of the local buses altogether and just have the global bus, letting all services send and receive events to and from it. There are two main reasons against this approach. To receive messages from a bus in another account, you would have to create rules in another account's bus for every pattern you want to match. This is not a clean separation of concerns. Secondly, even if you did create rules in the global bus, you cannot invoke any cross-account target with an EventBridge rule, say, a Lambda function, you can only target another EventBridge bus in another account.
 
 ## Cross-account EventBridge backbone example
 
@@ -91,12 +95,12 @@ The flow of events for the order creation use case is as follows.
 
 ## Global bus event rules
 
-Events cannot be sent anywhere in EventBridge without a rule. Rules can be based on a schedule or an event pattern. For our backbone, we need to create routing rules in the global bus. We create a single rule for each service account:
+Events cannot be sent anywhere in EventBridge without a rule. Rules can be based on a schedule or an event pattern. For our backbone, we need to create pattern-based routing rules in the global bus. We create a single rule for each service account:
 
 ```yaml
 eventPattern:
   account:
-    - 'anything-but': 12345789012
+    - 'anything-but': 12345789012  # Anything but the source account
 ```
 
 This rule will route all events to every service account except the one that sent the message.
@@ -117,7 +121,7 @@ We have covered the fundamental building blocks for a cross-account backbone wit
 
 If you want to read more on EventBridge, [Luciano Mammino](https://twitter.com/loige) and I have written an article and have a YouTube video and podcast episode to accompany it:
 1. [fourTheorem Blog: What can you do with EventBridge]( https://www.fourtheorem.com/blog/what-can-you-do-with-eventbridge)
-2. [AWS Bites 23. What’s the big deal with EventBridge? - YouTube](https://youtu.be/UjIE5qp-v8w)
+2. [AWS Bites Episode 23: What’s the big deal with EventBridge? - YouTube](https://youtu.be/UjIE5qp-v8w)
 
 We also have a full series of podcast episodes covering all the main AWS event services, including a deep dive on Kafka, so check out the playlist [here](https://www.youtube.com/watch?v=CG7uhkKftoY&list=PLAWXFhe0N1vLHkGO1ZIWW_SZpturHBiE_).
 
