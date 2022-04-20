@@ -62,13 +62,15 @@ Now, let's imagine this idea at a larger scale, where we have multiple accounts,
 
 - Every service send events to a global bus, a dedicated bus in a separate account
 - Every service receives events from a local bus in its own account
-- The global bus has rules to route all events to every local bus except the local bus of the event sender
+- The global bus has rules to route all events to every local bus except the local bus of the event sender. This could be classified as a _fan-out pattern_.
 
-> **Why do we need a global bus _and_ local buses?**
->
-> You might ask why services can't send events to their local bus instead of the global bus. Since each service receives events from their local bus, should it not publish there too? Apart from adding an additional layer, it's simply not possible with EventBridge.  You cannot have events transitively routed to a third bus (`local -> global -> local`). Only one cross-account target is allowed in the chain (`global -> local`)
->
-> You might also wonder why we can't get rid of the local buses altogether and just have the global bus, letting all services send and receive events to and from it. There are two main reasons against this approach. To receive messages from a bus in another account, you would have to create rules in another account's bus for every pattern you want to match. This is not a clean separation of concerns. Secondly, even if you did create rules in the global bus, you cannot invoke any cross-account target with an EventBridge rule, say, a Lambda function, you can only target another EventBridge bus in another account.
+*Note:* Every account comes with a `default` EventBridge bus, so it's not mandatory to create custom buses. We do so so we can control permissions at a bus level, and to separate these custom events completely from the AWS service events that are sent to the default bus.
+
+## Why do we need a global bus _and_ local buses?
+
+You might ask why services can't send events to their local bus instead of the global bus. Since each service receives events from their local bus, should it not publish there too? Apart from adding an additional layer, it's simply not possible with EventBridge.  You cannot have events transitively routed to a third bus (`local -> global -> local`). Only one cross-account target is allowed in the chain (`global -> local`)
+
+You might also wonder why we can't get rid of the local buses altogether and just have the global bus, letting all services send and receive events to and from it. There are two main reasons against this approach. To receive messages from a bus in another account, you would have to create rules in another account's bus for every pattern you want to match. This is not a clean separation of concerns. Secondly, even if you did create rules in the global bus, you cannot invoke any cross-account target with an EventBridge rule, say, a Lambda function, you can only target another EventBridge bus in another account.
 
 ## Cross-account EventBridge backbone example
 
@@ -76,6 +78,7 @@ Let's start with an example using an eCommerce use case. Our application has two
 
 - When orders are created, we want the delivery service to be notified.
 - When deliveries are sent, we want to update orders accordingly.
+
 
 We have two services and three accounts:
 1. The Order Service account, which has the order service logic and its own "local" EventBridge bus
@@ -115,15 +118,47 @@ eventPattern:
     - prefix: ''
 ```
 
+## Event structure, schemas and validation
+
+_Parts of this section were taken from [What can you do with EventBridge? (fourTheorem blog)](https://www.fourtheorem.com/blog/what-can-you-do-with-eventbridge)._
+
+With EventBridge, you have no obligation to provide a schema for your events but there is support if you wish to do so. Without a schema, you can be flexible in how you evolve the event structure but it can also lead to confusion for other developers who are trying to consume your events or even publish them in a way that is consistent with the organisation. This is even more important when we are talking about an event backbone, since you can assume that producers and consumers are in different teams or departments.
+
+Start with a clear set of principles for the structure of these events and how to manage changes in event structure over time. With EventBridge, each event can contain the following properties:
+
+|**Property** |**Purpose** |
+|--- |---- |
+|_Source_ |This defines the message origin. For AWS services, this might be something like `aws.config` but for your custom events you could specify the application or service name, like `order.service`.|
+|_DetailType_ |This usually denotes the event type, for example, `Order.Created` |
+|_EventBusName_ |The name of your custom bus or default. |
+|_Detail_ |This is the JSON-encoded payload of the message and it can contain relevant details about your event (e.g. order ID, customer name, product name, etc.)|
+
+The event structure can represent a contract between the producer and the consumer. Once a consumer strictly relies on fields being available in the `Detail` payload, you have semantic coupling between producer and consumer. There is a balance to be struck between including as much detail as possible in the message and reducing this semantic coupling. Too little data means that consumers will likely have to go and fetch extra data from the originating system.
+
+Too much data for your events means consumers come to rely on all that data in a certain structure, semantically coupling it to the producer and making it hard to change the structure later. A reasonable approach here is to start with less data and add properties incrementally as the need arises.
+
+Some basic principles for event structure include:
+
+- Do not rely on the `Source` for pattern matching as a consumer. A consumer should not need to be concerned with where the event came from.
+- Enforce a consistent structure for `DetailType`.
+- Separate the `Detail` into two child properties, `metadata` and `data`. This allows you to add additional metadata without mixing it in with the event payload itself. 
+
+While it is optional to _enforce_ schema validation, it is worthwhile if you are serious about EventBridge adoption at scale. EventBridge allows you to publish schemas in a registry for other teams and developers. This feature supports typed code binding generation too. If you do not want to create and upload the schema, you have the option to let EventBridge discover the schemas for you from events passing through the bus.
+
+If stricter schema enforcement is something you want to do, I'd recommend looking at the approach taken by PostNL as described by [Luc van Donkersgoed](https://twitter.com/donkersgood/) in [this insightful talk](https://www.youtube.com/watch?v=nyoMF1AEI7g).
+
+For great ideas on structuring event payloads, take a read of [Sheen Brisals' post on the Lego Engineering blog](https://medium.com/lego-engineering/the-power-of-amazon-eventbridge-is-in-its-detail-92c07ddcaa40).
 ## Further reading and viewing
 
 We have covered the fundamental building blocks for a cross-account backbone with EventBridge. There is plenty more you can do with EventBridge, like using archives and event replaying, as well as integrating it into other AWS services. For a small amount of upfront effort and minimal ongoing maintenance, you can achieve a very flexible and scalable event bus for many applications across accounts.
 
 If you want to read more on EventBridge, [Luciano Mammino](https://twitter.com/loige) and I have written an article and have a YouTube video and podcast episode to accompany it:
-1. [fourTheorem Blog: What can you do with EventBridge]( https://www.fourtheorem.com/blog/what-can-you-do-with-eventbridge)
-2. [AWS Bites Episode 23: What’s the big deal with EventBridge? - YouTube](https://youtu.be/UjIE5qp-v8w)
+1. [What can you do with EventBridge? (fourtheorem.com blog)](https://www.fourtheorem.com/blog/what-can-you-do-with-eventbridge)
+2. [What do you need to know about SNS? (fourtheorem.com blog)](https://www.fourtheorem.com/blog/what-do-you-need-to-know-about-sns]) - includes a comparison of SNS and EventBridge
+3. [AWS Bites Episode 23: What’s the big deal with EventBridge? - YouTube](https://youtu.be/UjIE5qp-v8w)
 
 We also have a full series of podcast episodes covering all the main AWS event services, including a deep dive on Kafka, so check out the playlist [here](https://www.youtube.com/watch?v=CG7uhkKftoY&list=PLAWXFhe0N1vLHkGO1ZIWW_SZpturHBiE_).
 
 ---
+
 About the author:....
