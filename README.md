@@ -1,6 +1,10 @@
-# Cross-account / cross-domain EventBridge example
+# Cross-account / cross-domain EventBridge backbone example
 
-This is a demonstration of using EventBridge across accounts to publish cross-domain application events. It uses the example of a simple e-commerce application: 
+This is a complete example of using EventBridge in multiple accounts to publish cross-domain application events.
+
+This architecture is detailed in 👉 [this blog post](https://dev.to/eoinsha/how-to-use-eventbridge-as-a-cross-account-event-backbone-5fik).
+
+It uses the example of a simple e-commerce application: 
 * A customer creates an order which is handled by an order service in its own account.
 * Delivery of orders is handled by a separate service in a different account. 
 
