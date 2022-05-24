@@ -1,4 +1,4 @@
-# EventBridge as a Cross-Account Event Backbone
+# How to use EventBridge as a Cross-Account Event Backbone
 <!--
 ---
 // Front matter for dev.to
@@ -12,9 +12,17 @@ tags: aws, eventbridge, crossaccount, kafka
 
 Two of the emerging best practices in modern AWS applications are:
 1. Use a separate AWS account per application
-2. Decouple communication between components using events instead of point-to-point, synchronous communication.
+2. Decouple communication between systems using events instead of point-to-point, synchronous communication.
 
-This post will show how EventBridge can provide an ideal event backbone for applications in multiple AWS accounts, achieving both of these best practices with minimal complexity. First, let's talk about why these are regarded as best practices. We want to avoid the mistake of accepting 'best practices' without understanding the reasoning!
+This post will show how EventBridge can provide an ideal event backbone for applications in multiple AWS accounts, achieving both of these best practices with minimal complexity. To illustrate these concepts, we will use the example of an eCommerce application. We will simplify it and imagine two separate services, each running in a separate AWS account. Simple applications do not need to have all components separated in their own accounts like this, but as the product grows and each service becomes sufficiently complex, with different teams involved, it becomes necessary to use dedicated accounts.
+
+Our eCommerce application has two services - the Order Service and the Delivery Service. There is a logical link between orders and the delivery of products being fulfilled, but these are regarded as separate services that should not be tightly coupled.
+
+In this multi-account setup, we will also dedicate an account for the event backbone itself. This gives us three accounts, with the potential to add more as we grow the number of services or applications.
+
+![A simple diagram showing three AWS accounts for order service, delivery service and the event backbone](./backbone-simple.png)
+
+Before we dive into the solution, let's talk about why account separation and event-driven communication are regarded as best practices. We want to avoid the mistake of accepting 'best practices' without understanding the reasoning!
 
 ## Separate AWS accounts
 
@@ -46,9 +54,11 @@ An Event Backbone is simply an event communication mechanism that serves multipl
 
 The term is [commonly used](https://kgb1001001.github.io/cloudadoptionpatterns/Event-Based-Architecture/Event-Backbone/) for such systems based on Apache Kafka, since Kafka was one of the first technologies that enabled event backbones for microservice communication with massive scale and performance. Since Kafka was first released over a decade ago, cloud managed services have evolved to the degree where you don't need to Kafka to have a scalable, reliable event backbone. Amazon EventBridge is the most obvious example, since it has managed to pull off the amazing feat of having a large feature set and massive scalability while remaining one of the simplest cloud services there is.
 
-If you are a Kafka fan, there is effort being put in by AWS in reducing the complexity with the managed MSK service and a generally available 'serverless' version in the works too. I would compare MSK to EventBridge in the same way I would compare EKS to Fargate or Lambda. You get a lot more control and configurability but even with the AWS managed service, you still have plenty of complexity.
+If you are a Kafka fan, there is effort being put in by AWS in reducing the complexity with the managed MSK, including the MSK Serverless version. I would compare MSK to EventBridge in the same way I would compare EKS to Fargate or Lambda. You get a lot more control and configurability but even with the AWS managed service, you still have plenty of complexity.
 
-The beauty of something like EventBridge is that the investment is so low. If your needs evolve, you can adapt and use alternative options for specific cases. You are not stuck with it because of a large investment in infrastructure or training. Need durability? Add SQS! Need low-latency, ordered streams? Add Kinesis! It's possible to build a event backbone on Kinesis or SNS/SQS but EventBridge is still the best place to start, integrates with more services and has really good cross-account support.
+![The three accounts showing EventBridge as the selected technology for the event backbone](./backbone-eb-simple.png)
+
+The beauty of something like EventBridge is that the investment is so low. If your needs evolve, you can adapt and use alternative options for specific cases. You are not stuck with it because of a large investment in infrastructure or training. If you need durability, add SQS! If you need lower latency, ordered streams, you can add Kinesis! It's possible to build a event backbone on Kinesis or SNS/SQS but EventBridge is still the best place to start, integrates with more services and has really good cross-account support.
 
 ## Cross-account EventBridge
 
@@ -56,10 +66,11 @@ We already mentioned that EventBridge has good support for cross-account scenari
 
 ![Cross account EventBridge](./cross-account-eb.png)
 
-For this to work, the target bus must have a policy that allows the source account to send events to it.
+For this to work, the target bus should have a policy that allows the source account to send events to it.
 
 Now, let's imagine this idea at a larger scale, where we have multiple accounts, each with their own applications or services. Where does each application need to send events? There are a few options here. If you want to explore all the options, take a look at [this great talk from re:Invent 2020 on Building event-driven architectures](https://youtu.be/Wk0FoXTUEjo).  In this article, I'll focus on my preferred option, referred to in that video as the "single-bus*, multi account-pattern". There are are in fact multiple buses, but a central bus in a dedicated account is used to route messages to multiple accounts, each with their own local bus.
 
+The important characteristics of this architecture are:
 - Every service send events to a global bus, a dedicated bus in a separate account
 - Every service receives events from a local bus in its own account
 - The global bus has rules to route all events to every local bus except the local bus of the event sender. This could be classified as a _fan-out pattern_.
@@ -68,13 +79,15 @@ Now, let's imagine this idea at a larger scale, where we have multiple accounts,
 
 ## Why do we need a global bus _and_ local buses?
 
-You might ask why services can't send events to their local bus instead of the global bus. Since each service receives events from their local bus, should it not publish there too? Apart from adding an additional layer, it's simply not possible with EventBridge.  You cannot have events transitively routed to a third bus (`local -> global -> local`). Only one cross-account target is allowed in the chain (`global -> local`)
+You might ask why services can't send events to their local bus instead of the global bus. Since each service receives events from their local bus, should it not publish there too? Apart from adding an additional layer, it's simply not possible with EventBridge.  You cannot have events transitively routed to a third bus (`local -> global -> local`). Only one cross-account target is allowed in the chain (`global -> local`). This is covered in the [EventBridge documentation](https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-cross-account.html):
+
+> “If a receiver account sets up a rule that sends events received from a sender account on to a third account, these events are not sent to the third account.”
 
 You might also wonder why we can't get rid of the local buses altogether and just have the global bus, letting all services send and receive events to and from it. There are two main reasons against this approach. To receive messages from a bus in another account, you would have to create rules in another account's bus for every pattern you want to match. This is not a clean separation of concerns. Secondly, even if you did create rules in the global bus, you cannot invoke any cross-account target with an EventBridge rule, say, a Lambda function, you can only target another EventBridge bus in another account.
 
 ## Cross-account EventBridge backbone example
 
-Let's start with an example using an eCommerce use case. Our application has two services - the Order Service and the Delivery Service. There is a logical link between orders and the delivery of products being fulfilled, but these are regarded as separate services that should not be tightly coupled.
+Let's return to our eCommerce use case. Our application has two services - the Order Service and the Delivery Service. In a real world scenario, these systems have sufficient features and logic, so it's warranted to separate them in different account. There is a logical link between orders and the delivery of products being fulfilled, but these are regarded as separate services that should not be tightly coupled.
 
 - When orders are created, we want the delivery service to be notified.
 - When deliveries are sent, we want to update orders accordingly.
@@ -148,6 +161,7 @@ While it is optional to _enforce_ schema validation, it is worthwhile if you are
 If stricter schema enforcement is something you want to do, I'd recommend looking at the approach taken by PostNL as described by [Luc van Donkersgoed](https://twitter.com/donkersgood/) in [this insightful talk](https://www.youtube.com/watch?v=nyoMF1AEI7g).
 
 For great ideas on structuring event payloads, take a read of [Sheen Brisals' post on the Lego Engineering blog](https://medium.com/lego-engineering/the-power-of-amazon-eventbridge-is-in-its-detail-92c07ddcaa40).
+
 ## Further reading and viewing
 
 We have covered the fundamental building blocks for a cross-account backbone with EventBridge. There is plenty more you can do with EventBridge, like using archives and event replaying, as well as integrating it into other AWS services. For a small amount of upfront effort and minimal ongoing maintenance, you can achieve a very flexible and scalable event bus for many applications across accounts.
