@@ -24,6 +24,11 @@ export abstract class BaseStack extends Stack {
 
     const globalBusArn = `arn:aws:events:${this.region}:${props.busAccount}:event-bus/global-bus`
     this.globalBus = EventBus.fromEventBusArn(this, 'GlobalBus', globalBusArn)
+
+    /**
+     * This is a reusable policy statement that allows Lambda functions to publish events
+     * to the global bus
+     */
     this.globalBusPutEventsStatement = new iam.PolicyStatement({
       actions: ['events:PutEvents'],
       resources: [globalBusArn],
