@@ -46,23 +46,34 @@ npm install -g aws-cdk
 npm install
 ```
 
-2. Set some environment variables for the three accounts.
-```
-export BUS_ACCOUNT=<your-account-id>
-export ORDER_SERVICE_ACCOUNT=<your-account-id>
-export DELIVERY_SERVICE_ACCOUNT=<your-account-id>
-```
+2. Set some environment variables for the four accounts.
 
-3. CDK Bootstrap each account. The following commands uses AWS profiles to indicate the account. There are [other ways](https://docs.aws.amazon.com/cdk/v2/guide/bootstrapping.html) if you are not using profiles.
+We will use three accounts for each stage (bus, order and delivery) as well as a deployment (CI/CD) account.
+The CDK code uses [CDK context variables](https://docs.aws.amazon.com/cdk/v2/guide/context.html) to read all account IDs.
+
+Create a file in the root called `cdk.context.json` and populate it with the following:
+```
+{
+  "bus-account": "<bus-account-id>",
+  "order-service-account": "<order-service-account-id>",
+  "delivery-service-account": "<delivery-service-account-id>",
+  "cicd-account": "<cicd-account-id>"
+}
+
+3. CDK Bootstrap each account. This example uses [named profiles](https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-profiles.html) to load credentials for each account. Replace the `--profile` value with the correct profile in each case, or use credentials in `AWS_` environment variables.
+When the three application accounts are being bootstrapped, we are allowing the CICD account to be trusted, and therefore allow each account's CDK deployment role to be assumed.
 
 ```
-cdk bootstrap --profile busAccount.AdministratorAccess
-cdk bootstrap --profile orderServiceAccount.AdministratorAccess
-cdk bootstrap --profile deliveryServiceAccount.AdministratorAccess
+cdk bootstrap --profile busAccount.AdministratorAccess --cloudformation-execution-policies arn:aws:iam::aws:policy/AdministratorAccess --trust=<cicd-account-id> aws://<bus-account-id>/<region>
+cdk bootstrap --profile orderServiceAccount.AdministratorAccess --cloudformation-execution-policies arn:aws:iam::aws:policy/AdministratorAccess --trust=<cicd-account-id>aws://<order-service-account-id>/<region>
+
+cdk bootstrap --profile deliveryServiceAccount.AdministratorAccess --cloudformation-execution-policies arn:aws:iam::aws:policy/AdministratorAccess --trust=<cicd-account-id>aws://<delivery-service-account-id>/<region>
+
+cdk bootstrap --profile cicdAccount.AdministratorAccess aws://<cicd-account-id>/<region>
 ```
 
 ## Deployment
-Deploy each stack:
+Once the boostrapping phase is successful, you can deploy the CI/CD pipeline.
 ```
 cdk deploy \
  -c order-service-account=${ORDER_SERVICE_ACCOUNT} \

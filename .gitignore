@@ -8,3 +8,7 @@ node_modules
 cdk.out
 .vscode
 .eslintcache
+
+cdk.context.json
+
+.DS_Store

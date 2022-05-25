@@ -20,7 +20,7 @@ export class PipelineStack extends Stack {
     const pipeline = new pipelines.CodePipeline(this, 'Pipeline', {
       crossAccountKeys: true,
       synth: new pipelines.ShellStep('Synth', {
-        input: pipelines.CodePipelineSource.connection('fourTheorem/cross-account-eventbridge', 'pipeline', {
+        input: pipelines.CodePipelineSource.connection('fourTheorem/cross-account-eventbridge', 'main', {
           connectionArn: codeStarConnection.ref,
           triggerOnPush: false, // TODO - set to true when working
         }),
