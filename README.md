@@ -59,6 +59,7 @@ Create a file in the root called `cdk.context.json` and populate it with the fol
   "delivery-service-account": "<delivery-service-account-id>",
   "cicd-account": "<cicd-account-id>"
 }
+```
 
 3. CDK Bootstrap each account. This example uses [named profiles](https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-profiles.html) to load credentials for each account. Replace the `--profile` value with the correct profile in each case, or use credentials in `AWS_` environment variables.
 When the three application accounts are being bootstrapped, we are allowing the CICD account to be trusted, and therefore allow each account's CDK deployment role to be assumed.
@@ -74,27 +75,11 @@ cdk bootstrap --profile cicdAccount.AdministratorAccess aws://<cicd-account-id>/
 
 ## Deployment
 Once the boostrapping phase is successful, you can deploy the CI/CD pipeline.
+
+_Note:_ You could choose to skip the deployment pipeline and manually `cdk deploy` each stack (`BusStack`, `OrderServiceStack` and `DeliveryServiceStack`). This approach creates a CDK pipeline (using CodePipeline) to do that for you, taking care of setup and subsequent continuous deployment.
+
 ```
-cdk deploy \
- -c order-service-account=${ORDER_SERVICE_ACCOUNT} \
- -c bus-account=${BUS_ACCOUNT} \
- -c delivery-service-account=${DELIVERY_SERVICE_ACCOUNT} \
- --profile busAccount.AdministratorAccess \
- BusStack
-
-cdk deploy \
- -c order-service-account=${ORDER_SERVICE_ACCOUNT} \
- -c delivery-service-account=${DELIVERY_SERVICE_ACCOUNT} \
- -c bus-account=${BUS_ACCOUNT} \
- --profile deliveryServiceAccount.AdministratorAccess \
- DeliveryServiceStack
-
-cdk deploy \
- -c order-service-account=${ORDER_SERVICE_ACCOUNT} \
- -c bus-account=${BUS_ACCOUNT} \
- -c delivery-service-account=${DELIVERY_SERVICE_ACCOUNT} \
- --profile orderServiceAccount.AdministratorAccess \
- OrderServiceStack
+cdk deploy --profile cideAccount.AdministratorAccess PipelineStack
 ```
 
 ## Usage
@@ -102,8 +87,15 @@ Create a test order:
 ```
 curl -X POST https://<API_GATEWAY_REST_API>.execute-api.eu-west-1.amazonaws.com/prod
 ```
-Replace `<API_GATEWAY_REST_API>` with the ID of the OrderService API. This is output when you deploy `OrderServiceStack`
+Replace `<API_GATEWAY_REST_API>` with the ID of the OrderService API. This is output when you deploy `OrderServiceStack`, so you can retrieve it from the `Outputs` section of the CloudFormation stack in the order service account.
 
 Verify that all events have been sent by checking the latest entries in the Global Bus logs in the bus account. You should see the three events as shown in this screenshot:
 
 ![CloudWatch Logs Insights showing the three events in the global bus log](./global-bus-logs.png)
+
+## Cleaning up
+If you are using this example as the basis for your own architecture, great! [Let me know](#contact) how it goes.
+Otherwise, you might want to clean up your resources. You can do that by deleting the stack from each of the four accounts in the CloudFormation console.
+
+## Contact ✉️
+Let me know what you think and if you are using this example to create your own cross-account bus. Reach out on [Twitter](https://twitter.com/eoins), [LinkedIn](https://www.linkedin.com/in/eoins/) or [GitHub](https://github.com/eoinsha).
