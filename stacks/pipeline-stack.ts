@@ -22,8 +22,9 @@ export class PipelineStack extends Stack {
       synth: new pipelines.ShellStep('Synth', {
         input: pipelines.CodePipelineSource.connection('fourTheorem/cross-account-eventbridge', 'main', {
           connectionArn: codeStarConnection.ref,
-          triggerOnPush: false, // TODO - set to true when working
+          triggerOnPush: true
         }),
+        installCommands: ['npm i -g npm@9'],
         commands: [
           'npm ci',
           'npm run build',

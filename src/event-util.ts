@@ -5,7 +5,7 @@ const log = pino({ name: 'event-sender' })
 
 const { BUS_ARN } = process.env
 
-import { Tracer } from '@aws-lambda-powertools/tracer';
+import { Tracer } from '@aws-lambda-powertools/tracer'
 
 /**
  * Utility to create EventBridge events in a consistent format

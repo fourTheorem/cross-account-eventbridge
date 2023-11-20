@@ -6,6 +6,7 @@ import * as lambda from 'aws-cdk-lib/aws-lambda'
 import * as apigw from 'aws-cdk-lib/aws-apigateway'
 import { BaseStack, BaseStackProps } from './base-stack';
 import { RetentionDays } from 'aws-cdk-lib/aws-logs';
+import { CfnOutput } from 'aws-cdk-lib';
 
 /**
  * Application to manage customer order
@@ -38,6 +39,10 @@ export class OrderServiceStack extends BaseStack {
     createOrderFunction.addToRolePolicy(this.globalBusPutEventsStatement)
     const api = new apigw.RestApi(this, 'OrderApi', { restApiName: 'order' })
     api.root.addMethod('POST', new apigw.LambdaIntegration(createOrderFunction))
+
+    new CfnOutput(this, 'apiEndpoint', {
+      value: `https://${api.restApiId}.execute-api.${this.region}.${this.urlSuffix}/${api.deploymentStage.stageName}`
+    })
   }
 
   createDeliveryUpdateFunction() {
