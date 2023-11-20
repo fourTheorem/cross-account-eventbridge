@@ -55,7 +55,7 @@ export class BusStack extends Stack {
     
     // Create forwarding rules to forward events to a local bus in a different account
     // and ensure the global bus has permissions to receive events from such accounts.
-    for (const applicationAccount of props.applicationAccounts) {
+    for (const applicationAccount of new Set(props.applicationAccounts)) { // Set used to handle same account used by multiple services
       const localBusArn = `arn:aws:events:${this.region}:${applicationAccount}:event-bus/local-bus`
       const rule = new events.Rule(this, `globalTo${applicationAccount}`, {
         eventBus: this.bus,
