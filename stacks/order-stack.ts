@@ -27,6 +27,7 @@ export class OrderServiceStack extends BaseStack {
   createOrderCreateFunction() {
     const createOrderFunction = new nodeLambda.NodejsFunction(this, 'CreateOrderFunction', {
       entry: './src/order-handler.ts',
+      runtime: lambda.Runtime.NODEJS_18_X,
       handler: 'handleOrderCreate',
       environment: {
         BUS_ARN: this.globalBus.eventBusArn
@@ -42,6 +43,7 @@ export class OrderServiceStack extends BaseStack {
   createDeliveryUpdateFunction() {
     const deliveryUpdateFunction = new nodeLambda.NodejsFunction(this, 'DeliveryUpdateFunction', {
       entry: './src/order-handler.ts',
+      runtime: lambda.Runtime.NODEJS_18_X,
       handler: 'handleDeliveryUpdate',
       environment: {
         BUS_ARN: this.globalBus.eventBusArn

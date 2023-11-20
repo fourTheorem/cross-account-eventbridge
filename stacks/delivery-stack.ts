@@ -25,6 +25,7 @@ export class DeliveryServiceStack extends BaseStack {
   createOrderDeliveryFunction() {
     const orderDeliveryFunction = new nodeLambda.NodejsFunction(this, 'OrderDeliveryFunction', {
       entry: './src/delivery-handler.ts',
+      runtime: lambda.Runtime.NODEJS_18_X,
       handler: 'handleOrderCreated',
       environment: {
         BUS_ARN: this.globalBus.eventBusArn,
