@@ -1,4 +1,4 @@
-import { Stack, StackProps } from 'aws-cdk-lib';
+import { CfnOutput, Stack, StackProps } from 'aws-cdk-lib';
 import { Construct } from 'constructs';
 import * as events from 'aws-cdk-lib/aws-events'
 import * as logs from 'aws-cdk-lib/aws-logs'
@@ -30,6 +30,10 @@ export class BusStack extends Stack {
 
     const bus = new events.EventBus(this, 'Bus', {
       eventBusName: 'global-bus',
+    })
+
+    new CfnOutput(this, 'globalBusName', {
+      value: bus.eventBusName
     })
 
     new events.CfnEventBusPolicy(this, 'BusPolicy', {

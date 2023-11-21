@@ -1,4 +1,4 @@
-import { Stack, StackProps } from 'aws-cdk-lib';
+import { CfnOutput, Stack, StackProps } from 'aws-cdk-lib';
 import { EventBus, IEventBus } from 'aws-cdk-lib/aws-events';
 import * as iam from 'aws-cdk-lib/aws-iam'
 import * as logs from 'aws-cdk-lib/aws-logs'
@@ -49,6 +49,10 @@ export abstract class BaseStack extends Stack {
         Resource: localBus.eventBusArn,
         Effect: 'Allow'
       }
+    })
+
+    new CfnOutput(this, 'localBusName', {
+      value: localBus.eventBusName,
     })
 
     new events.Rule(this, 'LocalLoggingRule', {

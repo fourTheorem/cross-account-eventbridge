@@ -59,12 +59,21 @@ export class OrderServiceStack extends BaseStack {
     deliveryUpdateFunction.addToRolePolicy(this.globalBusPutEventsStatement)
 
     // React to delivery events
-    new events.Rule(this, 'DeliveryHandlingRule', {
+    const deliveryEventsRule = new events.Rule(this, 'DeliveryHandlingRule', {
       eventBus: this.localBus,
       ruleName: 'order-service-rule',
       eventPattern: {
         detailType: ['Delivery.Updated'],
       }
-    }).addTarget(new LambdaFunctionTarget(deliveryUpdateFunction))
+    })
+    deliveryEventsRule.addTarget(new LambdaFunctionTarget(deliveryUpdateFunction))
+
+    new CfnOutput(this, 'deliveryEventsRule', {
+      value: deliveryEventsRule.ruleName
+    })
+
+    new CfnOutput(this, 'deliveryEventsRuleTarget', {
+      value: 'Target0'
+    })
   }
 }
