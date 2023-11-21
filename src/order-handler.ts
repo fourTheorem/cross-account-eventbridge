@@ -4,11 +4,15 @@ import { APIGatewayProxyHandler, EventBridgeHandler } from 'aws-lambda'
 import { Tracer } from '@aws-lambda-powertools/tracer'
 import { EventSender } from './event-util'
 
-const SERVICE_NAME = 'order.service'
+const { SERVICE_IDENTIFIER } = process.env
 
-const log = pino({ name: SERVICE_NAME })
-const tracer = new Tracer({ serviceName: SERVICE_NAME })
-const eventSender = new EventSender(SERVICE_NAME, tracer)
+if (!SERVICE_IDENTIFIER) {
+  throw new Error('SERVICE_IDENTIFIER env var is required')
+}
+
+const log = pino({ name: SERVICE_IDENTIFIER })
+const tracer = new Tracer({ serviceName: SERVICE_IDENTIFIER })
+const eventSender = new EventSender(SERVICE_IDENTIFIER, tracer)
 
 /**
  * HTTP POST /order handling. Create an order and post it in an 'Order.Created' event

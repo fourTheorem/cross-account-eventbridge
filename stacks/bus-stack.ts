@@ -64,7 +64,7 @@ export class BusStack extends Stack {
         eventBus: bus,
         ruleName: `globalTo${normalisedIdentifier}`,
         eventPattern: {
-          account: [{ 'anything-but': applicationAccount }] as any[]
+          source: [{ 'anything-but': identifier }] as any[]
         }
       })
       rule.addTarget(new EventBusTarget(EventBus.fromEventBusArn(this, `localBus${normalisedIdentifier}`, localBusArn)))

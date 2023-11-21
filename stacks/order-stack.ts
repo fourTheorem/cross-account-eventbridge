@@ -17,10 +17,11 @@ import { CfnOutput } from 'aws-cdk-lib';
  */
 export class OrderServiceStack extends BaseStack {
   localBus: events.EventBus
+  identifier: string
 
   constructor(scope: Construct, id: string, props: BaseStackProps) {
     super(scope, id, props);
-
+    this.identifier = props.identifier
     this.createOrderCreateFunction()
     this.createDeliveryUpdateFunction()
   }
@@ -31,7 +32,8 @@ export class OrderServiceStack extends BaseStack {
       runtime: lambda.Runtime.NODEJS_18_X,
       handler: 'handleOrderCreate',
       environment: {
-        BUS_ARN: this.globalBus.eventBusArn
+        BUS_ARN: this.globalBus.eventBusArn,
+        SERVICE_IDENTIFIER: this.identifier
       },
       logRetention: RetentionDays.ONE_WEEK,
       tracing: lambda.Tracing.ACTIVE,

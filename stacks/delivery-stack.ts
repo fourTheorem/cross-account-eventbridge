@@ -15,10 +15,11 @@ import { RetentionDays } from 'aws-cdk-lib/aws-logs';
 export class DeliveryServiceStack extends BaseStack {
 
   localBus: events.EventBus
+  identifier: string
 
   constructor(scope: Construct, id: string, props: BaseStackProps) {
     super(scope, id, props);
-
+    this.identifier = props.identifier
     this.createOrderDeliveryFunction()
   }
 
@@ -29,6 +30,7 @@ export class DeliveryServiceStack extends BaseStack {
       handler: 'handleOrderCreated',
       environment: {
         BUS_ARN: this.globalBus.eventBusArn,
+        SERVICE_IDENTIFIER: this.identifier
       },
       timeout: Duration.seconds(10),
       logRetention: RetentionDays.ONE_WEEK,
