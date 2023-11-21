@@ -6,6 +6,9 @@ import { BusStage } from '../stacks/bus-stage'
 import { OrderStage } from '../stacks/order-stage'
 import { DeliveryStage } from '../stacks/delivery-stage'
 
+const ORDER_SERVICE_IDENTIFIER = 'order-service'
+const DELIVERY_SERVICE_IDENTIFIER = 'delivery-service'
+
 const app = new cdk.App()
 
 const cicdAccount = app.node.tryGetContext('cicd-account')
@@ -18,7 +21,10 @@ const busStage = new BusStage(app, 'BusStage', {
     account: busAccount,
     region: app.region
   },
-  applicationAccounts: [orderAccount, deliveryAccount]
+  applicationAccountByIdentifier: {
+    [ORDER_SERVICE_IDENTIFIER]: orderAccount,
+    [DELIVERY_SERVICE_IDENTIFIER]: deliveryAccount
+  }
 })
 
 const orderStage = new OrderStage(app, 'OrderStage', {
@@ -26,6 +32,7 @@ const orderStage = new OrderStage(app, 'OrderStage', {
     account: orderAccount,
     region: app.region
   },
+  identifier: ORDER_SERVICE_IDENTIFIER,
   busAccount,
 })
 
@@ -34,6 +41,7 @@ const deliveryStage = new DeliveryStage(app, 'DeliveryStage', {
     account: deliveryAccount,
     region: app.region
   },
+  identifier: DELIVERY_SERVICE_IDENTIFIER,
   busAccount,
 })
 

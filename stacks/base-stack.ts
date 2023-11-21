@@ -8,6 +8,7 @@ import { Construct } from 'constructs';
 
 export interface BaseStackProps extends StackProps {
   busAccount: string
+  identifier: string
 }
 
 /**
@@ -38,10 +39,10 @@ export abstract class BaseStack extends Stack {
       retention: logs.RetentionDays.ONE_WEEK,
     })
 
-    const localBus = new events.EventBus(this, 'LocalBus', { eventBusName: 'local-bus' })
+    const localBus = new events.EventBus(this, 'LocalBus', { eventBusName: `local-bus-${props.identifier}` })
     new events.CfnEventBusPolicy(this, 'LocalBusPolicy', {
       eventBusName: localBus.eventBusName,
-      statementId: 'local-bus-policy-stmt',
+      statementId: `local-bus-policy-stmt-${props.identifier}`,
       statement: {
         Principal: { AWS: this.globalBus.env.account },
         Action: 'events:PutEvents',

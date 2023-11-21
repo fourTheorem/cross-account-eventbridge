@@ -2,6 +2,7 @@ import { Stack, StackProps } from 'aws-cdk-lib';
 import { Construct } from 'constructs';
 import * as events from 'aws-cdk-lib/aws-events'
 import * as logs from 'aws-cdk-lib/aws-logs'
+import * as Case from 'case'
 import {
    EventBus as EventBusTarget,
    CloudWatchLogGroup as LogGroupTarget
@@ -9,7 +10,7 @@ import {
 import { EventBus } from 'aws-cdk-lib/aws-events';
 
 interface BusStackProps extends StackProps {
-  applicationAccounts: string[]
+  applicationAccountByIdentifier: Record<string, string>
 }
 
 /**
@@ -19,9 +20,6 @@ interface BusStackProps extends StackProps {
  */
 export class BusStack extends Stack {
   bus: events.EventBus
-  /**
-   * List of local bus accounts to which global events should be forwarded.
-   */
 
   constructor(scope: Construct, id: string, props: BusStackProps) {
     super(scope, id, props);
@@ -38,7 +36,7 @@ export class BusStack extends Stack {
       eventBusName: bus.eventBusName,
       statementId: 'global-bus-policy-stmt',
       statement: {
-        Principal: { AWS: props?.applicationAccounts },
+        Principal: { AWS: Object.values(props?.applicationAccountByIdentifier) },
         Action: 'events:PutEvents',
         Resource: bus.eventBusArn,
         Effect: 'Allow'
@@ -55,16 +53,17 @@ export class BusStack extends Stack {
     
     // Create forwarding rules to forward events to a local bus in a different account
     // and ensure the global bus has permissions to receive events from such accounts.
-    for (const applicationAccount of new Set(props.applicationAccounts)) { // Set used to handle same account used by multiple services
-      const localBusArn = `arn:aws:events:${this.region}:${applicationAccount}:event-bus/local-bus`
-      const rule = new events.Rule(this, `globalTo${applicationAccount}`, {
+    for (const [identifier, applicationAccount] of Object.entries(props.applicationAccountByIdentifier)) { // Set used to handle same account used by multiple services
+      const normalisedIdentifier = Case.pascal(identifier)
+      const localBusArn = `arn:aws:events:${this.region}:${applicationAccount}:event-bus/local-bus-${identifier}`
+      const rule = new events.Rule(this, `globalTo${normalisedIdentifier}`, {
         eventBus: this.bus,
-        ruleName: `globalTo${applicationAccount}`,
+        ruleName: `globalTo${normalisedIdentifier}`,
         eventPattern: {
           account: [{ 'anything-but': applicationAccount }] as any[]
         }
       })
-      rule.addTarget(new EventBusTarget(EventBus.fromEventBusArn(this, `localBus${applicationAccount}`, localBusArn)))
+      rule.addTarget(new EventBusTarget(EventBus.fromEventBusArn(this, `localBus${normalisedIdentifier}`, localBusArn)))
     }
     this.bus = bus
   }

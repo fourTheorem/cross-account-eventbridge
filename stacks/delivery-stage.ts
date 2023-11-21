@@ -15,6 +15,7 @@ export class DeliveryStage extends BaseStage {
         account: this.node.tryGetContext('delivery-service-account'),
         region: this.region
       },
+      identifier: 'delivery-service',
       busAccount: props.busAccount
     })
   }

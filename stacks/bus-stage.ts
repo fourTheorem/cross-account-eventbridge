@@ -3,7 +3,7 @@ import { Stage, StageProps } from 'aws-cdk-lib'
 import { BusStack } from './bus-stack'
 
 interface BusStageProps extends StageProps {
-  applicationAccounts: string[]
+  applicationAccountByIdentifier: Record<string, string>
 }
 
 export class BusStage extends Stage {
@@ -13,7 +13,7 @@ export class BusStage extends Stage {
 
     const busStack = new BusStack(this, 'BusStack', {
       ...props,
-      applicationAccounts: props.applicationAccounts,
+      applicationAccountByIdentifier: props.applicationAccountByIdentifier,
     })
   }
 }

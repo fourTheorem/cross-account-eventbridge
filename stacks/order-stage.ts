@@ -13,7 +13,8 @@ export class OrderStage extends BaseStage {
         account: this.node.tryGetContext('order-service-account'),
         region: this.region
       },
-      busAccount: props.busAccount
+      busAccount: props.busAccount,
+      identifier: 'order-service'
     })
   }
 }
