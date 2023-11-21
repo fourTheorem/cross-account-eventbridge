@@ -62,6 +62,7 @@ export abstract class BaseStack extends Stack {
         source: [{ prefix: '' }] as any[] // Match all
       }
     }).addTarget(new LogGroupTarget(busLogGroup))
+
     this.localBus = localBus
   }
 }

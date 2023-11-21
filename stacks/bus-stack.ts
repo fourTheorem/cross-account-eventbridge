@@ -61,7 +61,7 @@ export class BusStack extends Stack {
       const normalisedIdentifier = Case.pascal(identifier)
       const localBusArn = `arn:aws:events:${this.region}:${applicationAccount}:event-bus/local-bus-${identifier}`
       const rule = new events.Rule(this, `globalTo${normalisedIdentifier}`, {
-        eventBus: this.bus,
+        eventBus: bus,
         ruleName: `globalTo${normalisedIdentifier}`,
         eventPattern: {
           account: [{ 'anything-but': applicationAccount }] as any[]
