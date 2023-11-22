@@ -53,7 +53,8 @@ export class OrderServiceStack extends BaseStack {
       runtime: lambda.Runtime.NODEJS_18_X,
       handler: 'handleDeliveryUpdate',
       environment: {
-        BUS_ARN: this.globalBus.eventBusArn
+        BUS_ARN: this.globalBus.eventBusArn,
+        SERVICE_IDENTIFIER: this.identifier
       },
       logRetention: RetentionDays.ONE_WEEK,
       tracing: lambda.Tracing.ACTIVE,
