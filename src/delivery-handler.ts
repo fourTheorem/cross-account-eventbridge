@@ -4,6 +4,7 @@ import { v4 as uuidv4 } from 'uuid'
 import { EventBridgeHandler } from 'aws-lambda'
 import { Tracer } from '@aws-lambda-powertools/tracer'
 import { EventSender } from './event-util'
+import { middify } from './lambda-common'
 
 const { SERVICE_IDENTIFIER } = process.env
 
@@ -18,7 +19,7 @@ const eventSender = new EventSender(SERVICE_IDENTIFIER, tracer)
  * Order Delivery processing - handle EventBridge events for Order.Created
  * and emit a Delivery.UpdatedEvent
  */
-export const handleOrderCreated: EventBridgeHandler<string, any, any> = async function (event, context) {
+export const handleOrderCreated: EventBridgeHandler<string, any, any> = middify(async function (event, context) {
   log.info({ event })
 
   const order = event.detail.data
@@ -34,4 +35,4 @@ export const handleOrderCreated: EventBridgeHandler<string, any, any> = async fu
     deliveryId: uuidv4()
   }
   await eventSender.send('Delivery.Updated', deliveryUpdate)
-}
+})
