@@ -6,6 +6,7 @@ import * as lambda from 'aws-cdk-lib/aws-lambda'
 import { BaseStack, BaseStackProps } from './base-stack'
 import { CfnOutput, Duration } from 'aws-cdk-lib';
 import { RetentionDays } from 'aws-cdk-lib/aws-logs';
+import { POWERTOOLS_METRICS_NAMESPACE } from '../src/lambda-common';
 
 /**
  * Application to handle deliveries for orders
@@ -30,7 +31,9 @@ export class DeliveryServiceStack extends BaseStack {
       handler: 'handleOrderCreated',
       environment: {
         BUS_ARN: this.globalBus.eventBusArn,
-        SERVICE_IDENTIFIER: this.identifier
+        SERVICE_IDENTIFIER: this.identifier,
+        POWERTOOLS_SERVICE_NAME: 'OrderDelivery',
+        POWERTOOLS_METRICS_NAMESPACE
       },
       timeout: Duration.seconds(10),
       logRetention: RetentionDays.ONE_WEEK,

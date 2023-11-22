@@ -21,3 +21,5 @@ export const middify = (handler: Handler) => {
     .use(logMetrics(metrics))
     .use(captureLambdaHandler(tracer))
 }
+
+export const POWERTOOLS_METRICS_NAMESPACE = 'CrossAccountEventBackbone'

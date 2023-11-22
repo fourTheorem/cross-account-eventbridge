@@ -7,6 +7,7 @@ import * as apigw from 'aws-cdk-lib/aws-apigateway'
 import { BaseStack, BaseStackProps } from './base-stack';
 import { RetentionDays } from 'aws-cdk-lib/aws-logs';
 import { CfnOutput } from 'aws-cdk-lib';
+import { POWERTOOLS_METRICS_NAMESPACE } from '../src/lambda-common';
 
 /**
  * Application to manage customer order
@@ -33,7 +34,9 @@ export class OrderServiceStack extends BaseStack {
       handler: 'handleOrderCreate',
       environment: {
         BUS_ARN: this.globalBus.eventBusArn,
-        SERVICE_IDENTIFIER: this.identifier
+        SERVICE_IDENTIFIER: this.identifier,
+        POWERTOOLS_SERVICE_NAME: 'OrderCreate',
+        POWERTOOLS_METRICS_NAMESPACE
       },
       logRetention: RetentionDays.ONE_WEEK,
       tracing: lambda.Tracing.ACTIVE,
@@ -54,7 +57,9 @@ export class OrderServiceStack extends BaseStack {
       handler: 'handleDeliveryUpdate',
       environment: {
         BUS_ARN: this.globalBus.eventBusArn,
-        SERVICE_IDENTIFIER: this.identifier
+        SERVICE_IDENTIFIER: this.identifier,
+        POWERTOOLS_SERVICE_NAME: 'DeliveryUpdate',
+        POWERTOOLS_METRICS_NAMESPACE
       },
       logRetention: RetentionDays.ONE_WEEK,
       tracing: lambda.Tracing.ACTIVE,
