@@ -13,7 +13,6 @@
     "cdk": "cdk"
   },
   "devDependencies": {
-    "@middy/core": "^5.0.2",
     "@types/aws-lambda": "^8.10.93",
     "@types/jest": "^26.0.10",
     "@types/node": "10.17.27",
@@ -37,6 +36,7 @@
     "@aws-lambda-powertools/tracer": "^1.16.0",
     "@aws-sdk/client-eventbridge": "^3.54.0",
     "@aws-sdk/client-ssm": "^3.54.0",
+    "@middy/core": "^5.0.2",
     "aws-cdk-lib": "^2.110.0",
     "case": "^1.6.3",
     "constructs": "^10.0.0",
