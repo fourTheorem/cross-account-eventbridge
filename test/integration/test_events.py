@@ -1,5 +1,7 @@
-import aws_iatk
+import time
 import json
+
+import aws_iatk
 import requests
 import pytest
 
@@ -53,25 +55,31 @@ def test_order_delivery(iatk: aws_iatk.AwsIatk):
     trace_id = response.headers['x-amzn-trace-id']
 
     # Check whether the delivery service received the Order.Created event
-    def assertion(event: str):
+    def event_assertion(event: str):
         payload = json.loads(event)
         assert payload['detail-type'] == "Order.Created" 
         assert payload['detail']['data']['orderId'] == order_id
 
-    assert iatk.wait_until_event_matched(delivery_listener_id, assertion)
+    assert iatk.wait_until_event_matched(delivery_listener_id, event_assertion)
 
-    # Check the trace to ensure all components participated
-    trace_tree = iatk.get_trace_tree(
-        tracing_header=trace_id,
-    ).trace_tree
-
-    assert [[seg.origin for seg in path] for path in trace_tree.paths] == [
-            ["AWS::StepFunctions::StateMachine", "AWS::Lambda"],
-            ["AWS::StepFunctions::StateMachine", "AWS::Lambda"],
-            ["AWS::StepFunctions::StateMachine", "AWS::SNS"],
+    def trace_assertion(trace: aws_iatk.GetTraceTreeOutput):
+        trace_tree = trace.trace_tree
+        assert [[seg.origin for seg in path] for path in trace_tree.paths] == [
+            ['AWS::Lambda', 'AWS::Lambda::Function', 'AWS::Events',
+             'AWS::Lambda', 'AWS::Lambda::Function', 'AWS::Events',
+             'AWS::Lambda', 'AWS::Lambda::Function', 'AWS::Events']
         ]
-    assert len(trace_tree.paths) == 3
+        assert trace_tree.source_trace.duration < 20
 
+    # This sleep should not be required for retry_get_trace_tree_until but it seems to mitigate
+    # https://github.com/awslabs/aws-iatk/issues/106
+    time.sleep(15)
+
+    assert iatk.retry_get_trace_tree_until(
+        tracing_header=trace_id,
+        assertion_fn=trace_assertion,
+        timeout_seconds=60,
+    )
 
 
 def remove_listeners(iatk):
