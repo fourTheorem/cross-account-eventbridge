@@ -61,6 +61,8 @@ Create a file in the root called `cdk.context.json` and populate it with the fol
 }
 ```
 
+**NOTE:** You can use the same account for everything if you want to skip the overhead of multiple accounts for development environments!
+
 3. CDK Bootstrap each account. This example uses [named profiles](https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-profiles.html) to load credentials for each account. Replace the `--profile` value with the correct profile in each case, or use credentials in `AWS_` environment variables.
 When the three application accounts are being bootstrapped, we are allowing the CICD account to be trusted, and therefore allow each account's CDK deployment role to be assumed.
 
@@ -92,6 +94,10 @@ Replace `<API_GATEWAY_REST_API>` with the ID of the OrderService API. This is ou
 Verify that all events have been sent by checking the latest entries in the Global Bus logs in the bus account. You should see the three events as shown in this screenshot:
 
 ![CloudWatch Logs Insights showing the three events in the global bus log](./global-bus-logs.png)
+
+## Testing
+
+An [IATK](https://github.com/awslabs/aws-iatk) integration test is provided in [](./test/integration/test_events.py). This is a work in progress. 🙂
 
 ## Cleaning up
 If you are using this example as the basis for your own architecture, great! [Let me know](#contact) how it goes.

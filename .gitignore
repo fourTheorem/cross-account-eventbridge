@@ -9,6 +9,7 @@ cdk.out
 .vscode
 .eslintcache
 
-cdk.context.json
-
+cdk*.context.json
+venv/
+*.pyc
 .DS_Store
