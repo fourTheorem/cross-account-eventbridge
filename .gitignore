@@ -13,3 +13,4 @@ cdk*.context.json
 venv/
 *.pyc
 .DS_Store
+tsconfig.tsbuildinfo

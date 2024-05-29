@@ -1,12 +1,8 @@
 {
   "compilerOptions": {
-    "target": "ES2018",
-    "module": "commonjs",
     "lib": [
-      "es2018"
+      "ES2022"
     ],
-    "declaration": true,
-    "strict": true,
     "noImplicitAny": true,
     "strictNullChecks": true,
     "noImplicitThis": true,
@@ -15,13 +11,26 @@
     "noUnusedParameters": false,
     "noImplicitReturns": true,
     "noFallthroughCasesInSwitch": false,
-    "inlineSourceMap": true,
     "inlineSources": true,
+    "inlineSourceMap": true,
     "experimentalDecorators": true,
     "strictPropertyInitialization": false,
     "typeRoots": [
       "./node_modules/@types"
-    ]
+    ],
+    "incremental": true,
+    "target": "es2020",
+    "module": "es2020",
+    "declaration": true,
+    "composite": true,
+    "strict": true,
+    "moduleResolution": "node",
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "preserveConstEnums": true,
+    "resolveJsonModule": true,
+    "rootDir": "."
   },
   "exclude": [
     "node_modules",
